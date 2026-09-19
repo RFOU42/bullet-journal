@@ -1,0 +1,25 @@
+#!/bin/sh
+# Runs before every commit: typecheck + the test suite for app/.
+# Installed automatically by `npm install` (app/package.json's "prepare"
+# script sets core.hooksPath to this directory) — see app/README.md.
+# Skip once with SKIP_HOOKS=1 git commit ...; skip permanently by unsetting
+# core.hooksPath (git config --unset core.hooksPath).
+
+if [ "$SKIP_HOOKS" = "1" ]; then
+  echo "pre-commit: SKIP_HOOKS=1, skipping typecheck/tests"
+  exit 0
+fi
+
+repo_root=$(git rev-parse --show-toplevel)
+cd "$repo_root/app" || exit 1
+
+if [ ! -d node_modules ]; then
+  echo "pre-commit: app/node_modules is missing — run 'npm install' in app/ first"
+  exit 1
+fi
+
+echo "pre-commit: typecheck…"
+npm run --silent typecheck || exit 1
+
+echo "pre-commit: tests…"
+npm run --silent test || exit 1
